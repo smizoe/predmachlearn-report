@@ -1,0 +1,128 @@
+---
+title: "Prediction of Exercise Quality"
+output:
+  html_document:
+    toc: true
+    theme: united
+    fig_caption: yes
+---
+
+# Training and Validation Data
+
+I first split the (training) data into two parts in the following manner:
+
+```{r, echo=T}
+library(caret)
+data <- read.csv("./pml-training.csv", na.strings=c("NA", "", "#DIV/0!"))
+set.seed(123)
+inTrain <- createDataPartition(data$classe, p=0.6, list=F)
+training  <- data[inTrain, ]
+testing  <- data[-inTrain, ]
+```
+
+```{r, echo=F}
+meaningful0 <- !(colnames(training) %in% c("X", "raw_timestamp_part_1", "raw_timestamp_part_2", "cvtd_timestamp", "num_window"))
+meaningful1 <- !sapply(training,function(x) all(is.na(x)))
+meaningful2 <- mapply( function(x,y) ifelse(!y, y, if(class(x) == "factor")  TRUE else var(x,na.rm=T) >abs(max(x, na.rm=T)) * 1e-10), training, meaningful0 & meaningful1)
+
+knnImp <-  function(df, model=NULL){
+    target.indices <- which(sapply(df, class) != "factor")
+    targets <- df[,target.indices]
+    non.targets <- df[,-target.indices]
+    if(is.null(model)){
+        res <- preProcess(targets,method="knnImpute")
+    }else{
+        res  <- model
+    }
+    df.part <- predict(res, targets)
+    df <- cbind(non.targets,df.part)
+    list(df=df, result=res)
+}
+
+conf.mat <- function(model, test.data){
+    prediction <- predict(model,test.data)
+    confusionMatrix(prediction,test.data$classe)
+}
+imputed <- knnImp(training[,meaningful0 & meaningful1 & meaningful2])
+testing.reduced <- testing[,meaningful0 & meaningful1 & meaningful2]
+test.1 <- knnImp(testing.reduced, imputed$result)
+```
+
+The data stored in variable _triaining_ is used to fit models and
+the data stored in variable _testing_ is set aside for validation.
+
+# Feature Selection
+
+In selecting features, I removed several of the features and augmented them with the k-nearest-neighbor imputation. In the following subsection, I describe how I performed them.
+
+Feature Removal
+---------------
+
+I removed the following features since all of their values are NA (e.g., empty strings or error message for "division by zero"):
+
+- kurtosis_yaw_belt
+- skewness_yaw_belt
+- kurtosis_yaw_dumbbell
+- skewness_yaw_dumbbell
+- kurtosis_yaw_forearm
+- skewness_yaw_forearm
+
+Further, I also removed the following features since they are not useful or inappropriate.
+For instance, given a user_name, raw_timestamp_part_1 is a perfect predictor for training and validation data set because a user's data belonging a class have neighboring timestamps.
+The following figure depicts this fact and confirms that this feature should not be taken into modeling.
+
+```{r, qplot, echo=F, fig.cap="Figure: Plot of raw_timestamp_part_1 vs. classe."}
+qplot(classe, raw_timestamp_part_1, data=subset(training,user_name=="charles"), colour=classe)+theme_bw()
+```
+
+Feature Imputation
+------------------
+
+The authors of the paper[@mainPaper] reported in the section of feature selection: _"17 features were selected:
+in the belt, were selected the mean and variance of the roll,
+maximum, range and variance of the accelerometer vector,
+variance of the gyro and variance of the magnetometer."_
+
+To utilize this information, I decieded to impute the average and variance of features based on existing values. After extracting columns that are not a factor, I applied k-nearest-neighbor imputation using caret package with default parameters.
+
+
+# Result
+
+After preprocessing, I fit a random forest model to the data.
+The confusion matrix of the resultant model is shown below:
+
+```{r, echo=F}
+load(file="mymodel")
+model1 <- models[[1]]
+conf.mat(model1,test.1$df)
+```
+
+# References
+
+---
+nocite: |
+  @dataSet
+---
+
+---
+references:
+  - id: dataSet
+    title: Weight Lifting Exercises Dataset
+    URL: http://groupware.les.inf.puc-rio.br/har
+  - id: mainPaper
+    title: Qualitative Activity Recognition of Weight Lifting Exercises
+    author:
+      - given: Eduardo
+        family: Velloso
+      - given: Andreas
+        family: Bulling
+      - given: Hans
+        family: Gellersen
+      - given: Wallace
+        family: Ugulino
+      - given: Hugo
+        family: Fuks
+    URL: http://groupware.les.inf.puc-rio.br/public/papers/2013.Velloso.QAR-WLE.pdf
+    issued:
+      year: 2013
+---

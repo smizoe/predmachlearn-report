@@ -83,12 +83,12 @@ in the belt, were selected the mean and variance of the roll,
 maximum, range and variance of the accelerometer vector,
 variance of the gyro and variance of the magnetometer."_
 
-To utilize this information, I decieded to impute the average and variance of features based on existing values. After extracting columns that are not a factor, I applied k-nearest-neighbor imputation using caret package with default parameters.
+To utilize this information, I decided to impute the average and variance of features based on existing values. After extracting columns that are not a factor, I applied k-nearest-neighbor imputation using caret package with default parameters.
 
 
 # Result
 
-After preprocessing, I fit a random forest model to the data.
+After preprocessing, I fit a random forest model to the validation data.
 The confusion matrix of the resultant model is shown below:
 
 ```{r, echo=F}
@@ -96,6 +96,19 @@ load(file="mymodel")
 model1 <- models[[1]]
 conf.mat(model1,test.1$df)
 ```
+
+The following table shows variable importance of my model:
+
+```{r, echo=F}
+varImp(model1)
+```
+
+Since the dataset for validation is relatively large, the estimate of accuracy (given by predicting on the validation set) has low bias and thus I expect the model would perform well on unknown datasets.
+
+The following ways can be taken to improve my model further:
+
+- use principal component analysis to reduce correlation between variables (e.g., rotation of forearm and that of dumbbell) and apply some other model
+- combine the other models through voting
 
 # References
 

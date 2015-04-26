@@ -113,7 +113,7 @@ testing  &lt;- data[-inTrain, ]</code></pre>
 </div>
 <div id="result" class="section level1">
 <h1>Result</h1>
-<p>After preprocessing, I fit a random forest model to the data. The confusion matrix of the resultant model is shown below:</p>
+<p>After preprocessing, I fit a random forest model to the validation data. The confusion matrix of the resultant model is shown below:</p>
 <pre><code>## Confusion Matrix and Statistics
 ## 
 ##           Reference
@@ -145,6 +145,38 @@ testing  &lt;- data[-inTrain, ]</code></pre>
 ## Detection Rate         0.2836   0.1913   0.1703   0.1612   0.1824
 ## Detection Prevalence   0.2856   0.1947   0.1742   0.1630   0.1824
 ## Balanced Accuracy      0.9970   0.9923   0.9859   0.9908   0.9962</code></pre>
+<p>The following table shows variable importance of my model:</p>
+<pre><code>## rf variable importance
+## 
+##   only 20 most important variables shown (out of 149)
+## 
+##                      Overall
+## roll_belt            100.000
+## pitch_forearm         49.103
+## yaw_belt              48.492
+## roll_forearm          40.080
+## magnet_dumbbell_z     39.918
+## magnet_dumbbell_y     37.439
+## pitch_belt            36.920
+## magnet_dumbbell_x     21.874
+## accel_dumbbell_y      16.562
+## roll_dumbbell         15.007
+## magnet_belt_y         14.688
+## accel_belt_z          14.394
+## magnet_belt_z         14.060
+## avg_roll_dumbbell     12.885
+## accel_dumbbell_z      12.800
+## accel_forearm_x       12.562
+## yaw_arm               11.574
+## total_accel_dumbbell  11.567
+## magnet_forearm_z      10.671
+## gyros_belt_z           9.952</code></pre>
+<p>Since the dataset for validation is relatively large, the estimate of accuracy (given by predicting on the validation set) has low bias and thus I expect the model would perform well on unknown datasets.</p>
+<p>The following ways can be taken to improve my model further:</p>
+<ul>
+<li>use principal component analysis to reduce correlation between variables (e.g., rotation of forearm and that of dumbbell) and apply some other model</li>
+<li>combine the other models through voting</li>
+</ul>
 <div class="references">
 <h1 id="references" class="unnumbered">References</h1>
 <p>Velloso, Eduardo, Andreas Bulling, Hans Gellersen, Wallace Ugulino, and Hugo Fuks. 2013. “Qualitative Activity Recognition of Weight Lifting Exercises.” <a href="http://groupware.les.inf.puc-rio.br/public/papers/2013.Velloso.QAR-WLE.pdf" class="uri">http://groupware.les.inf.puc-rio.br/public/papers/2013.Velloso.QAR-WLE.pdf</a>.</p>
